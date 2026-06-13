@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Floating Bubbles</title>
+    <title>Floating Bubbles - 3D Depth</title>
     
     <style>
         /* --- CSS STYLES --- */
@@ -11,7 +11,7 @@
             margin: 0;
             padding: 0;
             background-color: #000000; /* Black background */
-            overflow: hidden; /* Prevents scrollbars when bubbles go off-screen */
+            overflow: hidden; /* Prevents scrollbars */
         }
 
         #bubble-container {
@@ -22,19 +22,18 @@
 
         .bubble {
             position: absolute;
-            bottom: -100px; /* Starts just below the screen */
-            pointer-events: none; /* Allows mouse clicks to pass through */
-            will-change: transform; /* Optimizes the animation performance */
+            /* Moved further down to hide the new, larger bubbles before they float up */
+            bottom: -250px; 
+            pointer-events: none; 
+            will-change: transform; 
         }
 
-        /* The animation moves the bubble up by 120 viewport height.
-           The rotation uses a CSS variable (--rotation) set by JavaScript. */
         @keyframes flyUp {
             0% {
                 transform: translateY(0) rotate(0deg);
             }
             100% {
-                transform: translateY(-120vh) rotate(var(--rotation, 0deg));
+                transform: translateY(-130vh) rotate(var(--rotation, 0deg));
             }
         }
     </style>
@@ -48,43 +47,51 @@
         const container = document.getElementById('bubble-container');
 
         function createBubble() {
-            // 1. Create the image element
             const bubble = document.createElement('img');
-            bubble.src = 'bubble.png'; // Your uploaded bubble image
+            bubble.src = 'bubble.png'; 
             bubble.classList.add('bubble');
 
-            // 2. Randomize Size (between 20px and 80px)
-            const size = Math.random() * 60 + 20;
+            // 1. Define Size Range (Increased overall size: 40px to 160px)
+            const minSize = 40;
+            const maxSize = 160;
+            const size = Math.random() * (maxSize - minSize) + minSize;
+            
             bubble.style.width = `${size}px`;
             bubble.style.height = `${size}px`;
 
-            // 3. Randomize Horizontal Position (0% to 100% of the screen width)
+            // 2. Randomize Horizontal Position
             bubble.style.left = `${Math.random() * 100}vw`;
 
-            // 4. Randomize Opacity (between 0.2 and 1.0)
-            bubble.style.opacity = Math.random() * 0.8 + 0.2;
+            // 3. Calculate "Depth" Ratio (0.0 is smallest, 1.0 is largest)
+            const depthRatio = (size - minSize) / (maxSize - minSize);
 
-            // 5. Randomize Animation Speed (between 4s and 10s to reach the top)
-            const duration = Math.random() * 6 + 4; 
+            // 4. Tie Opacity to Size (Small = transparent, Big = fully opaque)
+            // Minimum opacity is 0.15, scaling up to 1.0 based on how big it is
+            const opacity = 0.15 + (depthRatio * 0.85);
+            bubble.style.opacity = opacity;
 
-            // 6. Randomize Rotation (some rotate left, some right)
+            // 5. Tie Speed to Size (Small = slower, Big = faster) for 3D parallax effect
+            // Base duration between 5s (fastest/biggest) and 12s (slowest/smallest)
+            // Added a tiny bit of randomness so they don't move in perfect uniform sheets
+            const duration = 12 - (depthRatio * 7) + (Math.random() * 2); 
+
+            // 6. Randomize Rotation
             const rotation = (Math.random() - 0.5) * 360; 
             bubble.style.setProperty('--rotation', `${rotation}deg`);
 
-            // 7. Apply the animation to the bubble
+            // 7. Apply the animation
             bubble.style.animation = `flyUp ${duration}s linear forwards`;
 
-            // 8. Add the bubble to the screen
             container.appendChild(bubble);
 
-            // 9. Clean up: Remove the bubble from the HTML after its animation finishes
+            // 8. Clean up
             setTimeout(() => {
                 bubble.remove();
             }, duration * 1000);
         }
 
-        // Generate a new bubble every 300 milliseconds
-        setInterval(createBubble, 300);
+        // Generate bubbles a bit slower (every 400ms) to avoid overcrowding with larger sizes
+        setInterval(createBubble, 400);
     </script>
 </body>
 </html>
