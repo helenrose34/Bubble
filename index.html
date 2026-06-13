@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Floating Bubbles - 3D Depth</title>
+    <title>Floating Bubbles - Blur Depth</title>
     
     <style>
         /* --- CSS STYLES --- */
@@ -22,10 +22,9 @@
 
         .bubble {
             position: absolute;
-            /* Moved further down to hide the new, larger bubbles before they float up */
-            bottom: -250px; 
+            bottom: -250px; /* Hides the large bubbles before they float up */
             pointer-events: none; 
-            will-change: transform; 
+            will-change: transform, filter; /* Optimizes performance for blur and movement */
         }
 
         @keyframes flyUp {
@@ -51,7 +50,7 @@
             bubble.src = 'bubble.png'; 
             bubble.classList.add('bubble');
 
-            // 1. Define Size Range (Increased overall size: 40px to 160px)
+            // 1. Define Size Range 
             const minSize = 40;
             const maxSize = 160;
             const size = Math.random() * (maxSize - minSize) + minSize;
@@ -65,14 +64,16 @@
             // 3. Calculate "Depth" Ratio (0.0 is smallest, 1.0 is largest)
             const depthRatio = (size - minSize) / (maxSize - minSize);
 
-            // 4. Tie Opacity to Size (Small = transparent, Big = fully opaque)
-            // Minimum opacity is 0.15, scaling up to 1.0 based on how big it is
-            const opacity = 0.15 + (depthRatio * 0.85);
-            bubble.style.opacity = opacity;
+            // 4. Tie Blur to Size (Small = blurry, Big = sharp)
+            // We invert the ratio so that a small depth ratio creates a high blur amount.
+            // Maximum blur is set to 8px.
+            const blurAmount = (1 - depthRatio) * 8;
+            bubble.style.filter = `blur(${blurAmount}px)`;
 
-            // 5. Tie Speed to Size (Small = slower, Big = faster) for 3D parallax effect
-            // Base duration between 5s (fastest/biggest) and 12s (slowest/smallest)
-            // Added a tiny bit of randomness so they don't move in perfect uniform sheets
+            // Ensure larger foreground bubbles always overlap smaller background bubbles
+            bubble.style.zIndex = Math.round(size);
+
+            // 5. Tie Speed to Size (Small = slower, Big = faster)
             const duration = 12 - (depthRatio * 7) + (Math.random() * 2); 
 
             // 6. Randomize Rotation
@@ -84,13 +85,13 @@
 
             container.appendChild(bubble);
 
-            // 8. Clean up
+            // 8. Clean up to prevent lag
             setTimeout(() => {
                 bubble.remove();
             }, duration * 1000);
         }
 
-        // Generate bubbles a bit slower (every 400ms) to avoid overcrowding with larger sizes
+        // Generate bubbles every 400ms
         setInterval(createBubble, 400);
     </script>
 </body>
